@@ -85,6 +85,9 @@ function initMessage() {
 
   socket.on('stop', (data) => {
     console.log("stop");
+    if (processor != null) {
+      stopRecording();
+    }
     $(".user").removeClass('bg-warning');
   });
 
@@ -93,9 +96,7 @@ function initMessage() {
       startRecording($(this));
       $(this).addClass("bg-danger");
     }).bind('mouseup mouseleave touchend touchleave', function () {
-      if (processor != null) {
-        stopRecording($(this));
-      }
+      socket.emit('endvoice');
       $(this).removeClass("bg-danger");
     });
 
@@ -111,9 +112,19 @@ function startRecording(user) {
   navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => {
     localstream = stream
     const input = this.context.createMediaStreamSource(stream)
-    processor = context.createScriptProcessor(16384, 7, 7)
+    const delay = this.context.createDelay(100)
+    var compressor = this.context.createDynamicsCompressor()
+    compressor.threshold.value = -50;
+    compressor.knee.value = 40;
+    compressor.ratio.value = 12;
+    compressor.reduction.value = -20;
+    compressor.attack.value = 0;
+    compressor.release.value = 0.25;
+    processor = context.createScriptProcessor()
 
-    input.connect(processor)
+    input.connect(delay)
+    delay.connect(compressor)
+    compressor.connect(processor)
     processor.connect(context.destination)
 
     processor.onaudioprocess = (e) => {
@@ -137,5 +148,4 @@ function stopRecording(user) {
     track.stop()
   })
   localstream = null
-  socket.emit('endvoice');
 }
