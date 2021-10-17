@@ -89,10 +89,10 @@ function initMessage() {
   });
 
   $('.user').each(function () {
-    $(this).on('mousedown', function (e) {
+    $(this).on('mousedown touchstart', function (e) {
       startRecording($(this));
       $(this).addClass("bg-danger");
-    }).bind('mouseup mouseleave', function () {
+    }).bind('mouseup mouseleave touchend touchend', function () {
       if (processor != null) {
         stopRecording($(this));
       }
