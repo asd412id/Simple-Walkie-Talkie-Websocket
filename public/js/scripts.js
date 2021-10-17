@@ -27,8 +27,12 @@ var localstream = null;
 var userNotif = '<audio src="sounds/user.mp3" style="display: none" id="userNotif"></audio>';
 var msgNotif = '<audio src="sounds/msg.mp3" style="display: none" id="msgNotif"></audio>';
 
-$("body").append(userNotif);
-$("body").append(msgNotif);
+var audio = null;
+var audioBlob = null;
+var audioUrl = null;
+
+// $("body").append(userNotif);
+// $("body").append(msgNotif);
 
 socket.on('connect', (data) => {
   if (userName == null) {
@@ -71,9 +75,9 @@ socket.on('list_user', (data) => {
 
 function initMessage() {
   socket.on('msg', (data) => {
-    const audioBlob = new Blob(data.audio);
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
+    audioBlob = new Blob(data.audio);
+    audioUrl = URL.createObjectURL(audioBlob);
+    audio = new Audio(audioUrl);
     audio.play();
     $(".user").each(function () {
       var _t = $(this);
@@ -85,6 +89,12 @@ function initMessage() {
 
   socket.on('stop', (data) => {
     console.log("stop");
+    if (audio != null) {
+      audio.pause();
+      audio = null;
+      audioBlob = null;
+      audioUrl = null;
+    }
     if (processor != null) {
       stopRecording();
     }
@@ -92,11 +102,18 @@ function initMessage() {
   });
 
   $('.user').each(function () {
-    $(this).on('mousedown touchstart', function (e) {
+    $(this).off().on('mousedown touchstart', function (e) {
+      if (audio != null) {
+        audio.pause();
+        audio = null;
+        audioBlob = null;
+        audioUrl = null;
+      }
       startRecording($(this));
       $(this).addClass("bg-danger");
     }).bind('mouseup mouseleave touchend touchleave', function () {
       socket.emit('endvoice');
+      stopRecording();
       $(this).removeClass("bg-danger");
     });
 
@@ -114,10 +131,10 @@ function startRecording(user) {
     const input = this.context.createMediaStreamSource(stream)
     const delay = this.context.createDelay(100)
     var compressor = this.context.createDynamicsCompressor()
-    compressor.threshold.value = -51;
-    compressor.knee.value = 41;
+    compressor.threshold.value = -50;
+    compressor.knee.value = 35;
     compressor.ratio.value = 13;
-    compressor.reduction.value = -25;
+    compressor.reduction.value = -15;
     compressor.attack.value = 0;
     compressor.release.value = 0.25;
     processor = context.createScriptProcessor(16384, 1, 1)
@@ -139,8 +156,14 @@ function startRecording(user) {
   })
 }
 
-function stopRecording(user) {
+function stopRecording() {
   console.log('stop recording')
+  if (audio != null) {
+    audio.pause();
+    audio = null;
+    audioBlob = null;
+    audioUrl = null;
+  }
   processor.disconnect()
   processor.onaudioprocess = null
   processor = null
