@@ -111,7 +111,7 @@ function startRecording(user) {
   navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => {
     localstream = stream
     const input = this.context.createMediaStreamSource(stream)
-    processor = context.createScriptProcessor(4096, 2, 2)
+    processor = context.createScriptProcessor(16384, 7, 7)
 
     input.connect(processor)
     processor.connect(context.destination)
