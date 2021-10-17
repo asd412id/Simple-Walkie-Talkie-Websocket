@@ -44,8 +44,8 @@ socket.on('disconnect', (data) => {
 });
 
 socket.on('user_join', () => {
-  $("#userNotif").trigger('pause');
-  $("#userNotif").trigger('play');
+  // $("#userNotif").trigger('pause');
+  // $("#userNotif").trigger('play');
 });
 
 socket.on('getID', (data) => {
@@ -114,13 +114,13 @@ function startRecording(user) {
     const input = this.context.createMediaStreamSource(stream)
     const delay = this.context.createDelay(100)
     var compressor = this.context.createDynamicsCompressor()
-    compressor.threshold.value = -50;
-    compressor.knee.value = 40;
-    compressor.ratio.value = 12;
-    compressor.reduction.value = -20;
+    compressor.threshold.value = -51;
+    compressor.knee.value = 41;
+    compressor.ratio.value = 13;
+    compressor.reduction.value = -25;
     compressor.attack.value = 0;
     compressor.release.value = 0.25;
-    processor = context.createScriptProcessor()
+    processor = context.createScriptProcessor(16384, 1, 1)
 
     input.connect(delay)
     delay.connect(compressor)
