@@ -92,7 +92,7 @@ function initMessage() {
     $(this).on('mousedown touchstart', function (e) {
       startRecording($(this));
       $(this).addClass("bg-danger");
-    }).bind('mouseup mouseleave touchend touchend', function () {
+    }).bind('mouseup mouseleave touchend touchleave', function () {
       if (processor != null) {
         stopRecording($(this));
       }
