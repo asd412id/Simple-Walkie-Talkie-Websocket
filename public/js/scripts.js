@@ -126,7 +126,14 @@ function startRecording(user) {
   context = new window.AudioContext()
   socket.emit('start', { 'sampleRate': context.sampleRate })
 
-  navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => {
+  navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    },
+    video: false,
+  }).then((stream) => {
     localstream = stream
     const input = this.context.createMediaStreamSource(stream)
     const delay = this.context.createDelay(100)
