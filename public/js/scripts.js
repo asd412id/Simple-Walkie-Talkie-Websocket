@@ -139,12 +139,12 @@ function startRecording(user) {
     const delay = this.context.createDelay(100)
     var compressor = this.context.createDynamicsCompressor()
     compressor.threshold.value = -50;
-    compressor.knee.value = 35;
-    compressor.ratio.value = 13;
-    compressor.reduction.value = -15;
+    compressor.knee.value = 40;
+    compressor.ratio.value = 15;
+    compressor.reduction.value = -20;
     compressor.attack.value = 0;
-    compressor.release.value = 0.25;
-    processor = context.createScriptProcessor(16384, 1, 1)
+    compressor.release.value = 0.5;
+    processor = context.createScriptProcessor()
 
     input.connect(delay)
     delay.connect(compressor)
