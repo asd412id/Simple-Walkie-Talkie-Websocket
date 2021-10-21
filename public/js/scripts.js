@@ -93,6 +93,7 @@ function initMessage() {
   });
 
   socket.on('stop', (data) => {
+    stopRecording();
     $(".user").removeClass('bg-warning');
   });
 
