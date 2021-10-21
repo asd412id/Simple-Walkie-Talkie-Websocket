@@ -17,6 +17,8 @@ function yourName() {
 }
 
 var $server_status = $("#status");
+const urlSearchParams = new URLSearchParams(window.location.search);
+const params = Object.fromEntries(urlSearchParams.entries());
 
 var socket = io();
 
@@ -31,7 +33,8 @@ var msgNotif = '<audio src="sounds/msg.mp3" style="display: none" id="msgNotif">
 // $("body").append(msgNotif);
 
 socket.on('connect', (data) => {
-  if (userName == null) {
+  userName = params.username;
+  if (userName == null || userName == undefined) {
     userName = yourName();
   }
   socket.emit('changeID', userName);
