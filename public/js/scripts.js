@@ -7,7 +7,7 @@ String.prototype.format = function () {
   return formatted;
 };
 function yourName() {
-  var name = prompt("What is your name?");
+  var name = prompt("Siapa nama Anda?");
   if (!name) {
     alert('Anda harus mengisi nama anda!');
     return yourName();
