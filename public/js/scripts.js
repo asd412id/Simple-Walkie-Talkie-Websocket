@@ -27,10 +27,6 @@ var localstream = null;
 var userNotif = '<audio src="sounds/user.mp3" style="display: none" id="userNotif"></audio>';
 var msgNotif = '<audio src="sounds/msg.mp3" style="display: none" id="msgNotif"></audio>';
 
-var audio = null;
-var audioBlob = null;
-var audioUrl = null;
-
 // $("body").append(userNotif);
 // $("body").append(msgNotif);
 
@@ -73,90 +69,85 @@ socket.on('list_user', (data) => {
   initMessage();
 });
 
+var speech = [];
+var play = false;
+
 function initMessage() {
-  socket.on('msg', (data) => {
-    audioBlob = new Blob(data.audio);
-    audioUrl = URL.createObjectURL(audioBlob);
-    audio = new Audio(audioUrl);
-    audio.play();
-    $(".user").each(function () {
-      var _t = $(this);
-      if (data.from == _t.data('id')) {
-        _t.addClass('bg-warning');
-      }
-    });
+  socket.on('msg', async (data) => {
+    speech.push(data.audio);
+    if (!play) {
+      play = true
+      $(".user").each(function () {
+        var _t = $(this);
+        if (data.from == _t.data('id')) {
+          _t.addClass('bg-warning');
+        }
+      });
+      const audioBlob = new Blob(speech);
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      await audio.play();
+      play = false
+      speech = [];
+    }
   });
 
   socket.on('stop', (data) => {
-    console.log("stop");
-    if (audio != null) {
-      audio.pause();
-      audio = null;
-      audioBlob = null;
-      audioUrl = null;
-    }
-    if (processor != null) {
-      stopRecording();
-    }
     $(".user").removeClass('bg-warning');
   });
 
   $('.user').each(function () {
-    $(this).off().on('mousedown touchstart', function (e) {
-      if (audio != null) {
-        audio.pause();
-        audio = null;
-        audioBlob = null;
-        audioUrl = null;
-      }
+    $(this).on('mousedown touchstart', function () {
       startRecording($(this));
       $(this).addClass("bg-danger");
-    }).bind('mouseup mouseleave touchend touchleave', function () {
-      socket.emit('endvoice');
+    });
+    $(this).on('mouseup mouseleave touchend touchleave', function () {
       stopRecording();
+      socket.emit('endvoice');
       $(this).removeClass("bg-danger");
     });
-
   })
 }
 
-function startRecording(user) {
+async function startRecording(user) {
   var send = {};
-  console.log('start recording')
-  context = new window.AudioContext()
+  var input = null;
+  var delay = null
+  var compressor = null;
+  var context = new AudioContext();
   socket.emit('start', { 'sampleRate': context.sampleRate })
 
   navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true
+      autoGainControl: true,
+      noiseSupperssion: true,
+      latency: 0.35
     },
     video: false,
-  }).then((stream) => {
-    localstream = stream
-    const input = this.context.createMediaStreamSource(stream)
-    const delay = this.context.createDelay(100)
-    var compressor = this.context.createDynamicsCompressor()
+  }).then(async (stream) => {
+    input = await context.createMediaStreamSource(stream)
+    delay = await context.createDelay(100)
+    compressor = await context.createDynamicsCompressor()
     compressor.threshold.value = -50;
     compressor.knee.value = 40;
     compressor.ratio.value = 15;
     compressor.reduction.value = -20;
     compressor.attack.value = 0;
     compressor.release.value = 0.5;
-    processor = context.createScriptProcessor()
+    processor = await context.createScriptProcessor(8192, 1, 2);
 
     input.connect(delay)
     delay.connect(compressor)
     compressor.connect(processor)
     processor.connect(context.destination)
 
-    processor.onaudioprocess = (e) => {
-      const voice = e.inputBuffer.getChannelData(0)
+    processor.onaudioprocess = async (e) => {
+      const voice = await e.inputBuffer.getChannelData(0)
       send.user_id = user.data('id');
       send.from = yourID;
-      send.audio = voice.buffer;
-      socket.emit('send_message', send);
+      send.audio = await voice.buffer;
+      await socket.emit('send_message', send);
     }
   }).catch((e) => {
     console.log(e)
@@ -164,18 +155,9 @@ function startRecording(user) {
 }
 
 function stopRecording() {
-  console.log('stop recording')
-  if (audio != null) {
-    audio.pause();
-    audio = null;
-    audioBlob = null;
-    audioUrl = null;
+  if (processor != null) {
+    processor.disconnect()
+    processor.onaudioprocess = null
+    processor = null
   }
-  processor.disconnect()
-  processor.onaudioprocess = null
-  processor = null
-  localstream.getTracks().forEach((track) => {
-    track.stop()
-  })
-  localstream = null
 }

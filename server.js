@@ -38,15 +38,13 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('user_join', data);
   });
 
-  let sampleRate = 192000
+  let sampleRate = 48000
 
   socket.on('start', (data) => {
     sampleRate = data.sampleRate
-    console.log(`Sample Rate: ${sampleRate}`)
   })
   socket.on('endvoice', () => {
     socket.broadcast.emit('stop');
-    socket.emit('stop');
   })
 
   socket.on('send_message', (data) => {
@@ -63,7 +61,7 @@ io.on('connection', (socket) => {
       channelData: [f32array]
     }
     WavEncoder.encode(audioData).then((buffer) => {
-      data.audio = [buffer];
+      data.audio = buffer;
       if (data.user_id != 'all') {
         io.to(data.user_id).emit('msg', data);
       } else {
