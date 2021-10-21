@@ -113,13 +113,14 @@ async function startRecording(user) {
   var send = {};
   var input = null;
   var delay = null
+  var filter = null
   var compressor = null;
   var context = new AudioContext();
   socket.emit('start', { 'sampleRate': context.sampleRate })
   navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
-      autoGainControl: true,
+      autoGainControl: false,
       noiseSupperssion: true,
       latency: 0.35
     },
@@ -130,14 +131,22 @@ async function startRecording(user) {
     compressor = await context.createDynamicsCompressor()
     compressor.threshold.value = -50;
     compressor.knee.value = 40;
-    compressor.ratio.value = 15;
+    compressor.ratio.value = 12;
     compressor.reduction.value = -20;
     compressor.attack.value = 0;
-    compressor.release.value = 0.5;
-    processor = await context.createScriptProcessor(8192, 1, 2);
+    compressor.release.value = 0.25;
+
+    filter = context.createBiquadFilter();
+    filter.Q.value = 8.30;
+    filter.frequency.value = 355;
+    filter.gain.value = 3.0;
+    filter.type = 'bandpass';
+
+    processor = await context.createScriptProcessor(0, 1, 2);
 
     input.connect(delay)
-    delay.connect(compressor)
+    delay.connect(compressor);
+    filter.connect(compressor)
     compressor.connect(processor)
     processor.connect(context.destination)
 
