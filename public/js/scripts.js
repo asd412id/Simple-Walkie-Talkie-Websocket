@@ -101,8 +101,7 @@ function initMessage() {
     $(this).on('mousedown touchstart', function () {
       startRecording($(this));
       $(this).addClass("bg-danger");
-    });
-    $(this).on('mouseup mouseleave touchend touchleave', function () {
+    }).bind('mouseup blur mouseleave touchend touchleave', function () {
       stopRecording();
       socket.emit('endvoice');
       $(this).removeClass("bg-danger");
@@ -117,7 +116,6 @@ async function startRecording(user) {
   var compressor = null;
   var context = new AudioContext();
   socket.emit('start', { 'sampleRate': context.sampleRate })
-
   navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
