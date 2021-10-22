@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
     sampleRate = data.sampleRate
   })
   socket.on('endvoice', () => {
-    socket.broadcast.emit('stop');
+    socket.emit('stop');
   })
 
   socket.on('send_message', (data) => {
